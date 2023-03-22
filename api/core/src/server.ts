@@ -1,6 +1,6 @@
 import express from "express";
 import "dotenv/config";
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
 
 const config = {
   host: process.env.DATABASE_HOST,
@@ -10,17 +10,18 @@ const config = {
 
 var app = express();
 
-app.get("/", function (req: any, res: any) {
-  const connection = mysql.createConnection(process.env.DATABASE_URL);
+app.get("/", async function (req: any, res: any) {
+  const connection = await mysql.createConnection(process.env.DATABASE_URL);
 
-  connection.query(
-    "SELECT * FROM `COMPROMISSO`",
-    function (err: any, results: any, fields: any) {
-      res.send(results);
-    }
-  );
+  try {
+    const [rows, fields] = await connection.execute(
+      "SELECT * FROM `COMPROMISSO`"
+    );
 
-  connection.end();
+    res.send(rows);
+  } finally {
+    connection.end();
+  }
 });
 
 if (!module.parent) {
